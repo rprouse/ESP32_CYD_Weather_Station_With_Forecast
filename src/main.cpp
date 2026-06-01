@@ -154,7 +154,7 @@ bool tft_output(int16_t x, int16_t y, uint16_t w, uint16_t h, uint16_t* bitmap) 
 **                          Setup
 ***************************************************************************************/
 void setup() {
-  Serial.begin(250000);
+  Serial.begin(115200);
   delay(500);
   Serial.println(PROGRAM_VERSION);
 
