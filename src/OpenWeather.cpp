@@ -158,7 +158,7 @@ bool OW_Weather::parseRequest(String url) {
     Serial.println(line);
 #endif
 
-    if ((millis() - timeout) > 50000UL)
+    if ((millis() - timeout) > 5000UL)
     {
       OW_STATUS_PRINTF ("HTTP header timeout\n");
       client.stop();
@@ -181,7 +181,7 @@ bool OW_Weather::parseRequest(String url) {
 #endif
     }
 
-    if ((millis() - timeout) > 80000UL)
+    if ((millis() - timeout) > 8000UL)
     {
       OW_STATUS_PRINTF("Client timeout during JSON parse\n");
       parser.reset();

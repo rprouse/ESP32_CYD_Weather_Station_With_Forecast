@@ -698,12 +698,11 @@ void fillSegment(int x, int y, int start_angle, int sub_angle, int r, unsigned i
 **                          Get 3 hourly index at start of next day
 ***************************************************************************************/
 int getNextDayIndex(void) {
-  int index = 0;
-  String today = forecast->dt_txt[0].substring(8, 10);
-  for (index = 0; index < 9; index++) {
-    if (forecast->dt_txt[index].substring(8, 10) != today) break;
+  int todayLocal = day(TIMEZONE.toLocal(now(), &tz1_Code));
+  for (int index = 0; index < 9; index++) {
+    if (day(TIMEZONE.toLocal(forecast->dt[index], &tz1_Code)) != todayLocal) return index;
   }
-  return index;
+  return 0;
 }
 
 /***************************************************************************************
