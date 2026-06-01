@@ -288,6 +288,11 @@ void updateData() {
   Serial.println(longitude);
 #endif
 
+#define SHOW_HEADER 1
+
+  Serial.println("Getting weather data...");
+  Serial.print("https://api.openweathermap.org/data/2.5/forecast?lat=" + latitude + "&lon=" + longitude + "&units=" + units + "&lang=" + language + "&appid=" + api_key);
+
   bool parsed = ow.getForecast(forecast, api_key, latitude, longitude, units, language);
 
   if (parsed) Serial.println("Data points received");
