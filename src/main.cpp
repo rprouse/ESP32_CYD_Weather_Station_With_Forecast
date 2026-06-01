@@ -2,18 +2,18 @@
   The sketch is displaying a nice Internet Weather Station with 3 4 days forecast on an
   ESP32-Cheap Yellow Display (CYD) with 2.8-inch TFT display and 320x240 pixels resolution.
 
-  The weather data is retrieved from OpenWeatherMap.org service and you need to get your own 
+  The weather data is retrieved from OpenWeatherMap.org service and you need to get your own
   (free) API key before running the sketch.
 
-  Please add the key, your Wi-Fi credentials, the location coordinates for the weather information and 
+  Please add the key, your Wi-Fi credentials, the location coordinates for the weather information and
   additional data about your Timezone in the settings file: 'All_Settings.h'.
 
-  The code is not written by me, but from Daniel Eichhorn (https://blog.squix.ch) and was 
+  The code is not written by me, but from Daniel Eichhorn (https://blog.squix.ch) and was
   adapted by Bodmer as an example for his OpenWeather library (https://github.com/Bodmer/OpenWeather/).
 
   I changed lines of code to crrect some issues, for more information see: https://github.com/Bodmer/OpenWeather/issues/26
   1):
-  Search for: String date = "Updated: " + strDate(local_time); 
+  Search for: String date = "Updated: " + strDate(local_time);
   Change to:  String date = "Updated: " + strDate(now());
   2)
   Search for: if ( today && id/100 == 8 && (forecast->dt[0] < forecast->sunrise || forecast->dt[0] > forecast->sunset)) id += 1000;
@@ -27,11 +27,11 @@
   See 'Upload_To_LittleFS.md' for more details about this.
 
               >>>       IMPORTANT TO PREVENT CRASHES      <<<
-  >>>>>>  Set LittleFS to at least 1.5Mbytes before uploading files  <<<<<<  
+  >>>>>>  Set LittleFS to at least 1.5Mbytes before uploading files  <<<<<<
 
   The sketch is using the TFT_eSPI library by Bodmer (https://github.com/Bodmer/TFT_eSPI), so please select the correct
   'User_Setups' file in the library folder. I prepare two files (see my GitHub Repository) that should work:
-  For older device with one USB connector (chip driver ILI9341) use: 
+  For older device with one USB connector (chip driver ILI9341) use:
     Setup801_ESP32_CYD_ILI9341_240x320.h
   New devices with two USB connectors (chip driver ST7789) require:
     Setup805_ESP32_CYD_ST7789_240x320.h
@@ -76,6 +76,7 @@ const char* PROGRAM_VERSION = "ESP32 CYD OpenWeatherMap LittleFS V02";
 
 // Additional functions
 #include "GfxUi.h"  // Attached to this sketch
+#include "MoonPhase.h"  // Attached to this sketch
 
 // Choose library to load
 #ifdef ESP8266
