@@ -32,7 +32,7 @@ No test suite exists; this is firmware that has to be exercised on real hardware
 
 ## Required first-time setup
 
-1. Copy `src/All_Settings.Example.h` → `src/All_Settings.h` and fill in WiFi credentials, OpenWeatherMap API key, lat/lon, and `TIMEZONE` (one of the `Timezone` objects defined in `src/NTP_Time.h` — `UK`, `euCET`, `usET`, `usCT`, `usMT`, `usPT`, etc.). `src/All_Settings.h` is gitignored so the API key never ships.
+1. Copy `src/All_Settings.Example.h` → `src/All_Settings.h` and fill in WiFi credentials, OpenWeatherMap API key, lat/lon, `location` (the city label shown top-right of the display), and `TIMEZONE` (one of the `Timezone` objects defined in `src/NTP_Time.h` — `UK`, `euCET`, `usET`, `usCT`, `usMT`, `usPT`, etc.). `src/All_Settings.h` is gitignored so the API key never ships.
 2. Run **Upload Filesystem Image** before the first firmware upload — the weather icons and `.vlw` fonts under `./data/` are loaded at runtime from LittleFS. Without them the sketch will fail at `LittleFS.begin()` or render blank icons.
 
 ## Architecture notes
@@ -45,6 +45,10 @@ The LittleFS source folder is `./data/` at the **project root** (PlatformIO conv
 
 `platformio.ini` uses `-include src/Setup_ESP32_2432S028R_<panel>.h` in `build_flags` to force-include a TFT_eSPI configuration header *before* every translation unit. This replaces the Arduino-IDE workflow of editing `TFT_eSPI/User_Setup_Select.h`. The two `Setup_*.h` files in `src/` are the pin/driver/rotation config for each panel — don't rename them without updating `platformio.ini`. `src/User_Setup.h` is a relic and not actually included.
 
+### Display orientation & layout
+
+The UI runs **landscape 320×240** via `tft.setRotation(1)` in `setup()` (`main.cpp`); use `3` to flip 180°. Every on-screen position lives in one **named `#define` block at the top of `main.cpp`** ("Landscape layout constants") — tune X/Y there, not inline in the draw functions. Text is placed by per-call `setTextDatum()` and bitmaps by a top-left anchor, so a `*_Y` for `TC`/`ML` text vs a `TL` bitmap won't line up without a half-line offset (`fontHeight()/2`, = 7 for `NSBold15`). The 4-day forecast is a **2×2 grid** (TUE/WED over THU/FRI). Only two smooth fonts exist (`NSBold15`, `NSBold36`) and `.vlw` fonts are **fixed-size** — relieve cramped text by spacing, not scaling.
+
 ### Time handling is split across three layers
 
 This bites every non-trivial change to the forecast logic:
@@ -55,7 +59,7 @@ This bites every non-trivial change to the forecast logic:
 
 ### Forecast slot indexing
 
-OpenWeatherMap's 5-day/3-hour endpoint returns 40 three-hour slots. The four forecast columns work by:
+OpenWeatherMap's 5-day/3-hour endpoint returns 40 three-hour slots. The four forecast cells (2×2 grid) work by:
 1. `getNextDayIndex()` returns the index of the first slot belonging to *tomorrow* in local time.
 2. `drawForecastDetail` is called with that index, then `+8`, `+16`, `+24` (one full day = 8 slots).
 3. Within each day, it samples slot `dayIndex + 4` (~midday) for the icon and label, and aggregates min/max temperature across all 8 slots of the day.
@@ -66,7 +70,7 @@ If the forecast is off by a day, suspect timezone math first.
 
 Everything under `./data/` is mounted as the root of LittleFS at runtime:
 - `data/fonts/NSBold15.vlw`, `NSBold36.vlw` — TFT_eSPI smooth fonts (referenced by `AA_FONT_SMALL` / `AA_FONT_LARGE` macros in `main.cpp`).
-- `data/icon/*.jpg` — Meteocon weather icons keyed by OpenWeatherMap condition ID via `getMeteoconIcon()` in `main.cpp`. The `id += 1000` trick swaps day/night variants for the "clouds" family (id/100 == 8) based on whether `now()` is between sunrise and sunset.
+- `data/icon/*.bmp` (current condition), `data/icon50/*.bmp` (forecast), `data/wind/*.bmp` (compass), `data/moon/*.bmp` — 24-bit BMP weather/compass/moon glyphs keyed by OpenWeatherMap condition ID via `getMeteoconIcon()` in `main.cpp`. The `id += 1000` trick swaps day/night variants for the "clouds" family (id/100 == 8) based on whether `now()` is between sunrise and sunset.
 
 The README warns to **set the LittleFS partition to ≥ 1.5 MB**. PlatformIO uses `board_build.filesystem = littlefs` with the board's default partition table; if uploadfs fails with "image too large," choose a custom partition scheme in `platformio.ini` (e.g. `board_build.partitions = huge_app.csv` or a custom CSV).
 
@@ -78,3 +82,4 @@ The README warns to **set the LittleFS partition to ≥ 1.5 MB**. PlatformIO use
 
 - IntelliSense (`clang` via the C/C++ extension) may flag `FS.h not found` and similar — these resolve correctly during the actual PlatformIO build because the ESP32 Arduino core's include paths are injected then, not at editor parse time. Running `PlatformIO: Rebuild IntelliSense Index` after `pio run` once usually clears the squigglies.
 - The `Corrupted dir pair at {0x1, 0x0}` LittleFS error at boot almost always means stale flash content from a previous SPIFFS layout (e.g. Arduino-IDE era). Fix with `pio run -t erase` then re-upload firmware + filesystem.
+- `GfxUi::drawBmp` (`src/GfxUi.cpp`) only renders **24-bit uncompressed** BMP (it checks `planes==1 && bpp==24 && compression==0`); 8-bit/palettized or compressed BMPs draw **nothing** — a silent failure, not an error. Editors often default to 8-bit on resize, so re-export icons as 24-bit BI_RGB.
