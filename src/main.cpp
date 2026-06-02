@@ -119,6 +119,67 @@ GfxUi ui = GfxUi(&tft);  // Jpeg and bmpDraw functions
 long lastDownloadUpdate = millis();
 
 /***************************************************************************************
+**                          Landscape layout constants (320x240)
+**  Positions only. Text datums and bitmap anchors are hard-coded inline at each
+**  draw call. Y values are starting points and may be nudged when viewed on hardware.
+***************************************************************************************/
+#define SCREEN_W       320
+#define SCREEN_H       240
+
+// Header band
+#define HEADER_DIV_Y    36
+#define CLOCK_X          6   // TL datum
+#define CLOCK_Y          0
+#define LOCATION_X     313   // TR datum
+#define LOCATION_Y       2
+#define UPDATED_X      313   // TR datum
+#define UPDATED_Y       21
+
+// Left column: current conditions
+#define COL_DIV_X      160   // vertical divider
+#define COL_DIV_TOP     40
+#define COL_DIV_BOT    188
+#define CUR_ICON_X       4   // 100x100 bitmap, TL anchor
+#define CUR_ICON_Y      36
+#define COND_LABEL_X   110   // TL datum
+#define COND_LABEL_Y    42
+#define TEMP_X         110   // TL datum, LARGE font (drawn in updateData)
+#define TEMP_Y          78
+#define TEMP_UNIT_X    150   // TL datum
+#define TEMP_UNIT_Y     80
+#define WIND_ICON_X     18   // 50x50 compass, TL anchor
+#define WIND_ICON_Y    138
+#define WIND_TXT_X      78   // TL datum
+#define WIND_SPEED_Y   150
+#define WIND_PRESS_Y   170
+
+// Bottom divider
+#define BOTTOM_DIV_Y   190
+
+// Forecast 2x2 grid (column centres)
+#define FC_COL_L_X     200
+#define FC_COL_R_X     276
+#define FC_R1_DAY_Y     50
+#define FC_R1_TEMP_Y    66
+#define FC_R1_ICON_Y    72   // 50x50 icon, TL anchor at (centre-25, this)
+#define FC_R2_DAY_Y    122
+#define FC_R2_TEMP_Y   138
+#define FC_R2_ICON_Y   144
+
+// Bottom band (sun / moon / cloud / humidity)
+#define SUN_X           44   // column centre
+#define SUN_HDR_Y      200
+#define SUN_RISE_Y     216
+#define SUN_SET_Y      231
+#define MOON_CX        126   // disc centre x; 60x60 bitmap anchored at (CX-30, ICON_Y)
+#define MOON_ICON_Y    164
+#define MOON_LABEL_Y   238
+#define CLOUD_X        205   // column centre
+#define HUM_X          281   // column centre
+#define BB_LABEL_Y     202
+#define BB_VALUE_Y     220
+
+/***************************************************************************************
 **                          Declare prototypes
 ***************************************************************************************/
 void updateData();
@@ -159,7 +220,7 @@ void setup() {
   Serial.println(PROGRAM_VERSION);
 
   tft.begin();
-  tft.setRotation(0);  // For 320x480 screen
+  tft.setRotation(1);  // Landscape 320x240 (use 3 to flip 180 deg)
   tft.fillScreen(TFT_BLACK);
 
   if (!LittleFS.begin()) {
@@ -623,7 +684,7 @@ const char* getMeteoconIcon(uint16_t id, bool today) {
 ***************************************************************************************/
 // if you don't want separators, comment out the tft-line
 void drawSeparator(uint16_t y) {
-  tft.drawFastHLine(10, y, 240 - 2 * 10, 0x4228);
+  tft.drawFastHLine(10, y, SCREEN_W - 2 * 10, 0x4228);
 }
 
 /***************************************************************************************
