@@ -615,8 +615,8 @@ void drawAstronomy() {
   int ip;
   uint8_t icon = moon_phase(y, m, d, h, &ip);
 
-  tft.drawString(moonPhase[ip], 120, 319);
-  ui.drawBmp("/moon/moonphase_L" + String(icon) + ".bmp", 120 - 30, 318 - 16 - 60);
+  ui.drawBmp("/moon/moonphase_L" + String(icon) + ".bmp", MOON_CX - 30, MOON_ICON_Y);
+  tft.drawString(moonPhase[ip], MOON_CX, MOON_LABEL_Y);
 
   // Sun header (centred)
   tft.setTextDatum(TC_DATUM);
@@ -640,31 +640,32 @@ void drawAstronomy() {
   drawArrow(textX - 6, SUN_SET_Y, false, TFT_CYAN);
   tft.drawString(setting, textX, SUN_SET_Y);
 
-  tft.setTextDatum(BC_DATUM);
+  // Cloud (centred column)
+  tft.setTextDatum(TC_DATUM);
   tft.setTextColor(TFT_ORANGE, TFT_BLACK);
-  tft.drawString(cloudStr, 195, 260);  // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< ?
+  tft.setTextPadding(0);
+  tft.drawString(cloudStr, CLOUD_X, BB_LABEL_Y);
 
   String cloudCover = "";
   cloudCover += forecast->clouds_all[0];
   cloudCover += "%";
 
-  tft.setTextDatum(BR_DATUM);
   tft.setTextColor(TFT_WHITE, TFT_BLACK);
-  tft.setTextPadding(tft.textWidth(" 100%"));
-  tft.drawString(cloudCover, 210, 277);
+  tft.setTextPadding(tft.textWidth(" 100% "));
+  tft.drawString(cloudCover, CLOUD_X, BB_VALUE_Y);
 
-  tft.setTextDatum(BC_DATUM);
+  // Humidity (centred column)
   tft.setTextColor(TFT_ORANGE, TFT_BLACK);
-  tft.drawString(humidityStr, 195, 300 - 2);  // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< ?
+  tft.setTextPadding(0);
+  tft.drawString(humidityStr, HUM_X, BB_LABEL_Y);
 
   String humidity = "";
   humidity += forecast->humidity[0];
   humidity += "%";
 
-  tft.setTextDatum(BR_DATUM);
-  tft.setTextColor(TFT_WHITE, TFT_BLACK);
-  tft.setTextPadding(tft.textWidth("100%"));
-  tft.drawString(humidity, 210, 315);
+  tft.setTextColor(TFT_CYAN, TFT_BLACK);
+  tft.setTextPadding(tft.textWidth(" 100% "));
+  tft.drawString(humidity, HUM_X, BB_VALUE_Y);
 
   tft.setTextPadding(0);  // Reset padding width to none
 }
