@@ -140,16 +140,16 @@ long lastDownloadUpdate = millis();
 #define COL_DIV_TOP     40
 #define COL_DIV_BOT    188
 #define CUR_ICON_X       6   // 64x64 bitmap, TL anchor
-#define CUR_ICON_Y      42
+#define CUR_ICON_Y      46
 #define COND_LABEL_X    78   // TL datum (right of the 64px icon)
-#define COND_LABEL_Y    40
+#define COND_LABEL_Y    46
 #define TEMP_X          78   // TL datum, LARGE font (drawn in updateData)
-#define TEMP_Y          58
+#define TEMP_Y          62
 #define TEMP_UNIT_X    130   // TL datum
-#define TEMP_UNIT_Y     60
-#define WIND_ICON_X     14   // 36x36 compass, TL anchor
+#define TEMP_UNIT_Y     64
+#define WIND_ICON_X     24   // 36x36 compass, TL anchor
 #define WIND_ICON_Y    128
-#define WIND_TXT_X      58   // TL datum
+#define WIND_TXT_X      68   // TL datum
 #define WIND_SPEED_Y   132
 #define WIND_PRESS_Y   150
 
@@ -159,9 +159,9 @@ long lastDownloadUpdate = millis();
 // Forecast 2x2 grid (column centres)
 #define FC_COL_L_X     200
 #define FC_COL_R_X     276
-#define FC_R1_DAY_Y     50
-#define FC_R1_TEMP_Y    68
-#define FC_R1_ICON_Y    84   // 32x32 icon, TL anchor at (centre-16, this)
+#define FC_R1_DAY_Y     46
+#define FC_R1_TEMP_Y    66
+#define FC_R1_ICON_Y    82   // 32x32 icon, TL anchor at (centre-16, this)
 #define FC_R2_DAY_Y    122
 #define FC_R2_TEMP_Y   140
 #define FC_R2_ICON_Y   156
@@ -257,7 +257,7 @@ void setup() {
   tft.setTextColor(TFT_LIGHTGREY, TFT_BLACK);
 
   tft.drawString("Original by: blog.squix.org", 160, 180);
-  tft.drawString("Adapted by: Bodmer", 160, 200);
+  tft.drawString("Adapted by: @rprouse", 160, 200);
 
   tft.setTextColor(TFT_YELLOW, TFT_BLACK);
 
