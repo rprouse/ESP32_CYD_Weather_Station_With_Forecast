@@ -433,12 +433,12 @@ void drawTime() {
   if (minute(local_time) < 10) timeNow += "0";
   timeNow += minute(local_time);
 
-  tft.setTextDatum(BC_DATUM);
+  tft.setTextDatum(TL_DATUM);
   tft.setTextColor(TFT_YELLOW, TFT_BLACK);
-  tft.setTextPadding(tft.textWidth(" 44:44 "));  // String width + margin
-  tft.drawString(timeNow, 120, 53);
+  tft.setTextPadding(tft.textWidth("44:44"));  // String width
+  tft.drawString(timeNow, CLOCK_X, CLOCK_Y);
 
-  drawSeparator(51);
+  drawSeparator(HEADER_DIV_Y);
 
   tft.setTextPadding(0);
 
@@ -454,10 +454,16 @@ void drawCurrentWeather() {
   String date = "Updated: " + strDate(now());  // see isue https://github.com/Bodmer/OpenWeather/issues/26
   String weatherText = "None";
 
-  tft.setTextDatum(BC_DATUM);
-  tft.setTextColor(TFT_ORANGE, TFT_BLACK);
+  // Location label (top-right)
+  tft.setTextDatum(TR_DATUM);
+  tft.setTextColor(TFT_CYAN, TFT_BLACK);
+  tft.setTextPadding(tft.textWidth(" Wwwwwwwwwwwwww "));  // wide enough to erase old label
+  tft.drawString(location, LOCATION_X, LOCATION_Y);
+
+  // Updated timestamp (top-right, below the location)
+  tft.setTextColor(TFT_YELLOW, TFT_BLACK);
   tft.setTextPadding(tft.textWidth(" Updated: Mmm 44 44:44 "));  // String width + margin
-  tft.drawString(date, 120, 16);
+  tft.drawString(date, UPDATED_X, UPDATED_Y);
 
   String weatherIcon = "";
 
