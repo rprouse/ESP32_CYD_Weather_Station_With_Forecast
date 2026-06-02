@@ -409,9 +409,9 @@ void drawProgress(uint8_t percentage, String text) {
   tft.setTextDatum(BC_DATUM);
   tft.setTextColor(TFT_ORANGE, TFT_BLACK);
   tft.setTextPadding(SCREEN_W);
-  tft.drawString(text, 160, 185);
+  tft.drawString(text, 160, 195);  // same line as the "Fetching..." status so it is overwritten
 
-  ui.drawProgressBar(10, 200, SCREEN_W - 20, 15, percentage, TFT_WHITE, TFT_BLUE);
+  ui.drawProgressBar(10, 210, SCREEN_W - 20, 15, percentage, TFT_WHITE, TFT_BLUE);
 
   tft.setTextPadding(0);
   tft.unloadFont();
@@ -461,8 +461,8 @@ void drawCurrentWeather() {
   tft.setTextPadding(tft.textWidth(" Wwwwwwwwwwwwww "));  // wide enough to erase old label
   tft.drawString(location, LOCATION_X, LOCATION_Y);
 
-  // Updated timestamp (top-right, below the location)
-  tft.setTextColor(TFT_YELLOW, TFT_BLACK);
+  // Updated timestamp (top-right, below the location) - greyed as secondary info
+  tft.setTextColor(TFT_DARKGREY, TFT_BLACK);
   tft.setTextPadding(tft.textWidth(" Updated: Mmm 44 44:44 "));  // String width + margin
   tft.drawString(date, UPDATED_X, UPDATED_Y);
 
