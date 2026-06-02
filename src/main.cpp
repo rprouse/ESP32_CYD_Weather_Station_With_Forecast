@@ -234,7 +234,7 @@ void setup() {
 // then disable and reload sketch to avoid reformatting on every boot!
 #ifdef FORMAT_LittleFS
   tft.setTextDatum(BC_DATUM);  // Bottom Centre datum
-  tft.drawString("Formatting LittleFS, so wait!", 120, 195);
+  tft.drawString("Formatting LittleFS, so wait!", 160, 120);
   LittleFS.format();
 #endif
 
@@ -244,29 +244,29 @@ void setup() {
 
   // Draw splash screen
   if (LittleFS.exists("/splash/OpenWeather.jpg") == true) {
-    TJpgDec.drawFsJpg(0, 40, "/splash/OpenWeather.jpg", LittleFS);
+    TJpgDec.drawFsJpg(40, 30, "/splash/OpenWeather.jpg", LittleFS);
   }
 
   delay(2000);
 
   // Clear bottom section of screen
-  tft.fillRect(0, 206, 240, 320 - 206, TFT_BLACK);
+  tft.fillRect(0, 160, SCREEN_W, SCREEN_H - 160, TFT_BLACK);
 
   tft.loadFont(AA_FONT_SMALL, LittleFS);
   tft.setTextDatum(BC_DATUM);  // Bottom Centre datum
   tft.setTextColor(TFT_LIGHTGREY, TFT_BLACK);
 
-  tft.drawString("Original by: blog.squix.org", 120, 260);
-  tft.drawString("Adapted by: Bodmer", 120, 280);
+  tft.drawString("Original by: blog.squix.org", 160, 180);
+  tft.drawString("Adapted by: Bodmer", 160, 200);
 
   tft.setTextColor(TFT_YELLOW, TFT_BLACK);
 
   delay(2000);
 
-  tft.fillRect(0, 206, 240, 320 - 206, TFT_BLACK);
+  tft.fillRect(0, 160, SCREEN_W, SCREEN_H - 160, TFT_BLACK);
 
-  tft.drawString("Connecting to WiFi", 120, 240);
-  tft.setTextPadding(240);  // Pad next drawString() text to full width to over-write old text
+  tft.drawString("Connecting to WiFi", 160, 195);
+  tft.setTextPadding(SCREEN_W);  // Pad next drawString() text to full width to over-write old text
 
 // Call once for ESP32 and ESP8266
 #if !defined(ARDUINO_ARCH_MBED)
@@ -283,9 +283,9 @@ void setup() {
   Serial.println();
 
   tft.setTextDatum(BC_DATUM);
-  tft.setTextPadding(240);        // Pad next drawString() text to full width to over-write old text
-  tft.drawString(" ", 120, 220);  // Clear line above using set padding width
-  tft.drawString("Fetching weather data...", 120, 240);
+  tft.setTextPadding(SCREEN_W);   // Pad next drawString() text to full width to over-write old text
+  tft.drawString(" ", 160, 175);  // Clear line above using set padding width
+  tft.drawString("Fetching weather data...", 160, 195);
 
   // Fetch the time
   udp.begin(localPort);
@@ -408,10 +408,10 @@ void drawProgress(uint8_t percentage, String text) {
   tft.loadFont(AA_FONT_SMALL, LittleFS);
   tft.setTextDatum(BC_DATUM);
   tft.setTextColor(TFT_ORANGE, TFT_BLACK);
-  tft.setTextPadding(240);
-  tft.drawString(text, 120, 260);
+  tft.setTextPadding(SCREEN_W);
+  tft.drawString(text, 160, 185);
 
-  ui.drawProgressBar(10, 269, 240 - 20, 15, percentage, TFT_WHITE, TFT_BLUE);
+  ui.drawProgressBar(10, 200, SCREEN_W - 20, 15, percentage, TFT_WHITE, TFT_BLUE);
 
   tft.setTextPadding(0);
   tft.unloadFont();
