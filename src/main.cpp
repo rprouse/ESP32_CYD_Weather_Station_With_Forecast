@@ -168,9 +168,8 @@ long lastDownloadUpdate = millis();
 
 // Bottom band (sun / moon / cloud / humidity)
 #define SUN_X           44   // column centre
-#define SUN_HDR_Y      192
-#define SUN_RISE_Y     216
-#define SUN_SET_Y      232
+#define SUN_RISE_Y     204   // aligned with the Cloud label row (BB_LABEL_Y)
+#define SUN_SET_Y      224   // aligned with the Cloud value row (BB_VALUE_Y)
 #define MOON_CX        126   // disc centre x; 34x34 bitmap anchored at (CX-17, ICON_Y)
 #define MOON_ICON_Y    191
 #define MOON_LABEL_Y   240
@@ -618,27 +617,24 @@ void drawAstronomy() {
   ui.drawBmp("/moon/moonphase_L" + String(icon) + ".bmp", MOON_CX - 17, MOON_ICON_Y);
   tft.drawString(moonPhase[ip], MOON_CX, MOON_LABEL_Y);
 
-  // Sun header (centred)
-  tft.setTextDatum(TC_DATUM);
-  tft.setTextColor(TFT_ORANGE, TFT_BLACK);
-  tft.setTextPadding(0);  // Reset padding width to none
-  tft.drawString(sunStr, SUN_X, SUN_HDR_Y);
-
-  // Sunrise / sunset times, each preceded by a line-drawn arrow, centred as a unit.
-  // ML_DATUM => y is the vertical centre of the text, matching the arrow centre.
+  // Sunrise / sunset, aligned with the Cloud label/value rows (no "Sun" header).
+  // Each row: orange sun disc + orange up/down arrow + cyan time, centred as a unit on SUN_X.
+  // ML_DATUM => y is the vertical centre of the text, matching the disc/arrow centres.
   tft.setTextDatum(ML_DATUM);
   tft.setTextColor(TFT_CYAN, TFT_BLACK);
   tft.setTextPadding(tft.textWidth("88:88"));
 
   String rising = strTime(forecast->sunrise);
-  int textX = SUN_X - (8 + tft.textWidth(rising)) / 2 + 8;  // centre the arrow+time pair
-  drawArrow(textX - 6, SUN_RISE_Y, true, TFT_CYAN);
-  tft.drawString(rising, textX, SUN_RISE_Y);
+  int startX = SUN_X - (20 + tft.textWidth(rising)) / 2;  // disc(6) + gap(4) + arrow(6) + gap(4) + time
+  tft.fillCircle(startX + 3, SUN_RISE_Y, 3, TFT_ORANGE);
+  drawArrow(startX + 13, SUN_RISE_Y, true, TFT_ORANGE);
+  tft.drawString(rising, startX + 20, SUN_RISE_Y);
 
   String setting = strTime(forecast->sunset);
-  textX = SUN_X - (8 + tft.textWidth(setting)) / 2 + 8;
-  drawArrow(textX - 6, SUN_SET_Y, false, TFT_CYAN);
-  tft.drawString(setting, textX, SUN_SET_Y);
+  startX = SUN_X - (20 + tft.textWidth(setting)) / 2;
+  tft.fillCircle(startX + 3, SUN_SET_Y, 3, TFT_ORANGE);
+  drawArrow(startX + 13, SUN_SET_Y, false, TFT_ORANGE);
+  tft.drawString(setting, startX + 20, SUN_SET_Y);
 
   // Cloud (centred column)
   tft.setTextDatum(TC_DATUM);
