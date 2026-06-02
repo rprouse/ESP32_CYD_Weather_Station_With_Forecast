@@ -191,6 +191,7 @@ void drawForecastDetail(uint16_t cx, uint16_t dayY, uint16_t tempY, uint16_t ico
 const char* getMeteoconIcon(uint16_t id, bool today);
 void drawAstronomy();
 void drawSeparator(uint16_t y);
+void drawArrow(int x, int yCentre, bool up, uint16_t colour);
 void fillSegment(int x, int y, int start_angle, int sub_angle, int r, unsigned int colour);
 String strDate(time_t unixTime);
 String strTime(time_t unixTime);
@@ -617,22 +618,27 @@ void drawAstronomy() {
   tft.drawString(moonPhase[ip], 120, 319);
   ui.drawBmp("/moon/moonphase_L" + String(icon) + ".bmp", 120 - 30, 318 - 16 - 60);
 
-  tft.setTextDatum(BC_DATUM);
+  // Sun header (centred)
+  tft.setTextDatum(TC_DATUM);
   tft.setTextColor(TFT_ORANGE, TFT_BLACK);
   tft.setTextPadding(0);  // Reset padding width to none
-  tft.drawString(sunStr, 40, 270);
+  tft.drawString(sunStr, SUN_X, SUN_HDR_Y);
 
-  tft.setTextDatum(BR_DATUM);
-  tft.setTextColor(TFT_WHITE, TFT_BLACK);
-  tft.setTextPadding(tft.textWidth(" 88:88 "));
+  // Sunrise / sunset times, each preceded by a line-drawn arrow, centred as a unit.
+  // ML_DATUM => y is the vertical centre of the text, matching the arrow centre.
+  tft.setTextDatum(ML_DATUM);
+  tft.setTextColor(TFT_CYAN, TFT_BLACK);
+  tft.setTextPadding(tft.textWidth("88:88"));
 
-  String rising = strTime(forecast->sunrise) + " ";
-  int dt = rightOffset(rising, ":");  // Draw relative to colon to them aligned
-  tft.drawString(rising, 40 + dt, 290);
+  String rising = strTime(forecast->sunrise);
+  int textX = SUN_X - (8 + tft.textWidth(rising)) / 2 + 8;  // centre the arrow+time pair
+  drawArrow(textX - 6, SUN_RISE_Y, true, TFT_CYAN);
+  tft.drawString(rising, textX, SUN_RISE_Y);
 
-  String setting = strTime(forecast->sunset) + " ";
-  dt = rightOffset(setting, ":");
-  tft.drawString(setting, 40 + dt, 305);
+  String setting = strTime(forecast->sunset);
+  textX = SUN_X - (8 + tft.textWidth(setting)) / 2 + 8;
+  drawArrow(textX - 6, SUN_SET_Y, false, TFT_CYAN);
+  tft.drawString(setting, textX, SUN_SET_Y);
 
   tft.setTextDatum(BC_DATUM);
   tft.setTextColor(TFT_ORANGE, TFT_BLACK);
@@ -699,6 +705,24 @@ const char* getMeteoconIcon(uint16_t id, bool today) {
 // if you don't want separators, comment out the tft-line
 void drawSeparator(uint16_t y) {
   tft.drawFastHLine(10, y, SCREEN_W - 2 * 10, 0x4228);
+}
+
+/***************************************************************************************
+**                          Draw a small up/down arrow from line primitives
+***************************************************************************************/
+// ~8px tall, vertically centred on yCentre, horizontally centred on x.
+void drawArrow(int x, int yCentre, bool up, uint16_t colour) {
+  int half = 4;  // half-height -> ~8px tall
+  int top = yCentre - half;
+  int bot = yCentre + half;
+  tft.drawLine(x, top, x, bot, colour);  // vertical shaft
+  if (up) {
+    tft.drawLine(x, top, x - 3, top + 4, colour);  // left head
+    tft.drawLine(x, top, x + 3, top + 4, colour);  // right head
+  } else {
+    tft.drawLine(x, bot, x - 3, bot - 4, colour);  // left head
+    tft.drawLine(x, bot, x + 3, bot - 4, colour);  // right head
+  }
 }
 
 /***************************************************************************************
