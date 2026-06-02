@@ -167,16 +167,16 @@ long lastDownloadUpdate = millis();
 #define FC_R2_ICON_Y   156
 
 // Bottom band (sun / moon / cloud / humidity)
-#define SUN_X           44   // column centre
-#define SUN_RISE_Y     204   // aligned with the Cloud label row (BB_LABEL_Y)
-#define SUN_SET_Y      224   // aligned with the Cloud value row (BB_VALUE_Y)
-#define MOON_CX        126   // disc centre x; 34x34 bitmap anchored at (CX-17, ICON_Y)
+#define SUN_X           44          // column centre
+#define SUN_RISE_Y     (BB_LABEL_Y + 7)   // ML centre = Cloud TC top + fontHeight/2 (NSBold15)
+#define SUN_SET_Y      (BB_VALUE_Y + 7)   // aligned with the Cloud value row
+#define MOON_CX        126          // disc centre x; 34x34 bitmap anchored at (CX-17, ICON_Y)
 #define MOON_ICON_Y    191
 #define MOON_LABEL_Y   240
 #define CLOUD_X        205   // column centre
 #define HUM_X          281   // column centre
-#define BB_LABEL_Y     196
-#define BB_VALUE_Y     216
+#define BB_LABEL_Y     198
+#define BB_VALUE_Y     218
 
 /***************************************************************************************
 **                          Declare prototypes
