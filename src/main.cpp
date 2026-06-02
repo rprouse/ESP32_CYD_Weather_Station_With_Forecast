@@ -139,19 +139,19 @@ long lastDownloadUpdate = millis();
 #define COL_DIV_X      160   // vertical divider
 #define COL_DIV_TOP     40
 #define COL_DIV_BOT    188
-#define CUR_ICON_X       4   // 100x100 bitmap, TL anchor
-#define CUR_ICON_Y      36
-#define COND_LABEL_X   110   // TL datum
-#define COND_LABEL_Y    42
-#define TEMP_X         110   // TL datum, LARGE font (drawn in updateData)
-#define TEMP_Y          78
-#define TEMP_UNIT_X    150   // TL datum
-#define TEMP_UNIT_Y     80
-#define WIND_ICON_X     18   // 50x50 compass, TL anchor
-#define WIND_ICON_Y    138
-#define WIND_TXT_X      78   // TL datum
-#define WIND_SPEED_Y   150
-#define WIND_PRESS_Y   170
+#define CUR_ICON_X       6   // 64x64 bitmap, TL anchor
+#define CUR_ICON_Y      42
+#define COND_LABEL_X    78   // TL datum (right of the 64px icon)
+#define COND_LABEL_Y    40
+#define TEMP_X          78   // TL datum, LARGE font (drawn in updateData)
+#define TEMP_Y          58
+#define TEMP_UNIT_X    130   // TL datum
+#define TEMP_UNIT_Y     60
+#define WIND_ICON_X     14   // 36x36 compass, TL anchor
+#define WIND_ICON_Y    128
+#define WIND_TXT_X      58   // TL datum
+#define WIND_SPEED_Y   132
+#define WIND_PRESS_Y   150
 
 // Bottom divider
 #define BOTTOM_DIV_Y   190
@@ -160,24 +160,24 @@ long lastDownloadUpdate = millis();
 #define FC_COL_L_X     200
 #define FC_COL_R_X     276
 #define FC_R1_DAY_Y     50
-#define FC_R1_TEMP_Y    66
-#define FC_R1_ICON_Y    72   // 50x50 icon, TL anchor at (centre-25, this)
+#define FC_R1_TEMP_Y    68
+#define FC_R1_ICON_Y    84   // 32x32 icon, TL anchor at (centre-16, this)
 #define FC_R2_DAY_Y    122
-#define FC_R2_TEMP_Y   138
-#define FC_R2_ICON_Y   144
+#define FC_R2_TEMP_Y   140
+#define FC_R2_ICON_Y   156
 
 // Bottom band (sun / moon / cloud / humidity)
 #define SUN_X           44   // column centre
-#define SUN_HDR_Y      200
+#define SUN_HDR_Y      192
 #define SUN_RISE_Y     216
-#define SUN_SET_Y      231
-#define MOON_CX        126   // disc centre x; 60x60 bitmap anchored at (CX-30, ICON_Y)
-#define MOON_ICON_Y    164
-#define MOON_LABEL_Y   238
+#define SUN_SET_Y      232
+#define MOON_CX        126   // disc centre x; 34x34 bitmap anchored at (CX-17, ICON_Y)
+#define MOON_ICON_Y    191
+#define MOON_LABEL_Y   240
 #define CLOUD_X        205   // column centre
 #define HUM_X          281   // column centre
-#define BB_LABEL_Y     202
-#define BB_VALUE_Y     220
+#define BB_LABEL_Y     196
+#define BB_VALUE_Y     216
 
 /***************************************************************************************
 **                          Declare prototypes
@@ -591,9 +591,9 @@ void drawForecastDetail(uint16_t cx, uint16_t dayY, uint16_t tempY, uint16_t ico
   tft.setTextDatum(TL_DATUM);
   tft.drawString(lowTemp, cx + 3, tempY);
 
-  // Condition icon (50x50) centred on the column
+  // Condition icon (32x32) centred on the column
   String weatherIcon = getMeteoconIcon(forecast->id[dayIndex + 4], false);
-  ui.drawBmp("/icon50/" + weatherIcon + ".bmp", cx - 25, iconY);
+  ui.drawBmp("/icon50/" + weatherIcon + ".bmp", cx - 16, iconY);
 
   tft.setTextPadding(0);  // Reset padding width to none
 }
@@ -615,7 +615,7 @@ void drawAstronomy() {
   int ip;
   uint8_t icon = moon_phase(y, m, d, h, &ip);
 
-  ui.drawBmp("/moon/moonphase_L" + String(icon) + ".bmp", MOON_CX - 30, MOON_ICON_Y);
+  ui.drawBmp("/moon/moonphase_L" + String(icon) + ".bmp", MOON_CX - 17, MOON_ICON_Y);
   tft.drawString(moonPhase[ip], MOON_CX, MOON_LABEL_Y);
 
   // Sun header (centred)
