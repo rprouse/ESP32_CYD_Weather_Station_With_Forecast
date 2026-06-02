@@ -46,6 +46,10 @@ const String longitude = "-73.98629815117553"; // 180.000 to -180.000 negative f
 // For language codes see https://openweathermap.org/current#multi
 const String language = "en";  // Default language = en = English
 
+// Location label shown top-right of the display (the API has no province/state,
+// so set the full label you want here, e.g. "Fernie, BC").
+const String location = "Fernie, BC";
+
 // Short day of week abbreviations used in 4 day forecast (change to your language)
 const String shortDOW[8] = { "???", "SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT" };
 

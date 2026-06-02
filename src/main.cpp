@@ -119,6 +119,66 @@ GfxUi ui = GfxUi(&tft);  // Jpeg and bmpDraw functions
 long lastDownloadUpdate = millis();
 
 /***************************************************************************************
+**                          Landscape layout constants (320x240)
+**  Positions only. Text datums and bitmap anchors are hard-coded inline at each
+**  draw call. Y values are starting points and may be nudged when viewed on hardware.
+***************************************************************************************/
+#define SCREEN_W       320
+#define SCREEN_H       240
+
+// Header band
+#define HEADER_DIV_Y    36
+#define CLOCK_X          6   // TL datum
+#define CLOCK_Y          0
+#define LOCATION_X     313   // TR datum
+#define LOCATION_Y       2
+#define UPDATED_X      313   // TR datum
+#define UPDATED_Y       21
+
+// Left column: current conditions
+#define COL_DIV_X      160   // vertical divider
+#define COL_DIV_TOP     40
+#define COL_DIV_BOT    188
+#define CUR_ICON_X       6   // 64x64 bitmap, TL anchor
+#define CUR_ICON_Y      46
+#define COND_LABEL_X    78   // TL datum (right of the 64px icon)
+#define COND_LABEL_Y    46
+#define TEMP_X          78   // TL datum, LARGE font (drawn in updateData)
+#define TEMP_Y          62
+#define TEMP_UNIT_X    130   // TL datum
+#define TEMP_UNIT_Y     64
+#define WIND_ICON_X     24   // 36x36 compass, TL anchor
+#define WIND_ICON_Y    128
+#define WIND_TXT_X      68   // TL datum
+#define WIND_SPEED_Y   132
+#define WIND_PRESS_Y   150
+
+// Bottom divider
+#define BOTTOM_DIV_Y   190
+
+// Forecast 2x2 grid (column centres)
+#define FC_COL_L_X     200
+#define FC_COL_R_X     276
+#define FC_R1_DAY_Y     46
+#define FC_R1_TEMP_Y    66
+#define FC_R1_ICON_Y    82   // 32x32 icon, TL anchor at (centre-16, this)
+#define FC_R2_DAY_Y    122
+#define FC_R2_TEMP_Y   140
+#define FC_R2_ICON_Y   156
+
+// Bottom band (sun / moon / cloud / humidity)
+#define SUN_X           44          // column centre
+#define SUN_RISE_Y     (BB_LABEL_Y + 7)   // ML centre = Cloud TC top + fontHeight/2 (NSBold15)
+#define SUN_SET_Y      (BB_VALUE_Y + 7)   // aligned with the Cloud value row
+#define MOON_CX        126          // disc centre x; 34x34 bitmap anchored at (CX-17, ICON_Y)
+#define MOON_ICON_Y    191
+#define MOON_LABEL_Y   240
+#define CLOUD_X        205   // column centre
+#define HUM_X          281   // column centre
+#define BB_LABEL_Y     198
+#define BB_VALUE_Y     218
+
+/***************************************************************************************
 **                          Declare prototypes
 ***************************************************************************************/
 void updateData();
@@ -126,10 +186,11 @@ void drawProgress(uint8_t percentage, String text);
 void drawTime();
 void drawCurrentWeather();
 void drawForecast();
-void drawForecastDetail(uint16_t x, uint16_t y, uint8_t dayIndex);
+void drawForecastDetail(uint16_t cx, uint16_t dayY, uint16_t tempY, uint16_t iconY, uint8_t dayIndex);
 const char* getMeteoconIcon(uint16_t id, bool today);
 void drawAstronomy();
 void drawSeparator(uint16_t y);
+void drawArrow(int x, int yCentre, bool up, uint16_t colour);
 void fillSegment(int x, int y, int start_angle, int sub_angle, int r, unsigned int colour);
 String strDate(time_t unixTime);
 String strTime(time_t unixTime);
@@ -159,7 +220,7 @@ void setup() {
   Serial.println(PROGRAM_VERSION);
 
   tft.begin();
-  tft.setRotation(0);  // For 320x480 screen
+  tft.setRotation(1);  // Landscape 320x240 (use 3 to flip 180 deg)
   tft.fillScreen(TFT_BLACK);
 
   if (!LittleFS.begin()) {
@@ -172,7 +233,7 @@ void setup() {
 // then disable and reload sketch to avoid reformatting on every boot!
 #ifdef FORMAT_LittleFS
   tft.setTextDatum(BC_DATUM);  // Bottom Centre datum
-  tft.drawString("Formatting LittleFS, so wait!", 120, 195);
+  tft.drawString("Formatting LittleFS, so wait!", 160, 120);
   LittleFS.format();
 #endif
 
@@ -182,29 +243,29 @@ void setup() {
 
   // Draw splash screen
   if (LittleFS.exists("/splash/OpenWeather.jpg") == true) {
-    TJpgDec.drawFsJpg(0, 40, "/splash/OpenWeather.jpg", LittleFS);
+    TJpgDec.drawFsJpg(40, 30, "/splash/OpenWeather.jpg", LittleFS);
   }
 
   delay(2000);
 
   // Clear bottom section of screen
-  tft.fillRect(0, 206, 240, 320 - 206, TFT_BLACK);
+  tft.fillRect(0, 160, SCREEN_W, SCREEN_H - 160, TFT_BLACK);
 
   tft.loadFont(AA_FONT_SMALL, LittleFS);
   tft.setTextDatum(BC_DATUM);  // Bottom Centre datum
   tft.setTextColor(TFT_LIGHTGREY, TFT_BLACK);
 
-  tft.drawString("Original by: blog.squix.org", 120, 260);
-  tft.drawString("Adapted by: Bodmer", 120, 280);
+  tft.drawString("Original by: blog.squix.org", 160, 180);
+  tft.drawString("Adapted by: @rprouse", 160, 200);
 
   tft.setTextColor(TFT_YELLOW, TFT_BLACK);
 
   delay(2000);
 
-  tft.fillRect(0, 206, 240, 320 - 206, TFT_BLACK);
+  tft.fillRect(0, 160, SCREEN_W, SCREEN_H - 160, TFT_BLACK);
 
-  tft.drawString("Connecting to WiFi", 120, 240);
-  tft.setTextPadding(240);  // Pad next drawString() text to full width to over-write old text
+  tft.drawString("Connecting to WiFi", 160, 195);
+  tft.setTextPadding(SCREEN_W);  // Pad next drawString() text to full width to over-write old text
 
 // Call once for ESP32 and ESP8266
 #if !defined(ARDUINO_ARCH_MBED)
@@ -221,9 +282,9 @@ void setup() {
   Serial.println();
 
   tft.setTextDatum(BC_DATUM);
-  tft.setTextPadding(240);        // Pad next drawString() text to full width to over-write old text
-  tft.drawString(" ", 120, 220);  // Clear line above using set padding width
-  tft.drawString("Fetching weather data...", 120, 240);
+  tft.setTextPadding(SCREEN_W);   // Pad next drawString() text to full width to over-write old text
+  tft.drawString(" ", 160, 175);  // Clear line above using set padding width
+  tft.drawString("Fetching weather data...", 160, 195);
 
   // Fetch the time
   udp.begin(localPort);
@@ -288,8 +349,6 @@ void updateData() {
   Serial.println(longitude);
 #endif
 
-#define SHOW_HEADER 1
-
   Serial.println("Getting weather data...");
   Serial.print("https://api.openweathermap.org/data/2.5/forecast?lat=" + latitude + "&lon=" + longitude + "&units=" + units + "&lang=" + language + "&appid=" + api_key);
 
@@ -321,15 +380,15 @@ void updateData() {
     // Update the temperature here so we don't need to keep
     // loading and unloading font which takes time
     tft.loadFont(AA_FONT_LARGE, LittleFS);
-    tft.setTextDatum(TR_DATUM);
+    tft.setTextDatum(TL_DATUM);
     tft.setTextColor(TFT_YELLOW, TFT_BLACK);
 
     // Font ASCII code 0xB0 is a degree symbol, but o used instead in small font
-    tft.setTextPadding(tft.textWidth(" -88"));  // Max width of values
+    tft.setTextPadding(tft.textWidth("-88"));  // Max width of values
 
     String weatherText = "";
     weatherText = String(forecast->temp[0], 0);  // Make it integer temperature
-    tft.drawString(weatherText, 215, 95);        //  + "°" symbol is big... use o in small font
+    tft.drawString(weatherText, TEMP_X, TEMP_Y); //  + "°" symbol is big... use o in small font
     tft.unloadFont();
   } else {
     Serial.println("Failed to get weather");
@@ -346,10 +405,10 @@ void drawProgress(uint8_t percentage, String text) {
   tft.loadFont(AA_FONT_SMALL, LittleFS);
   tft.setTextDatum(BC_DATUM);
   tft.setTextColor(TFT_ORANGE, TFT_BLACK);
-  tft.setTextPadding(240);
-  tft.drawString(text, 120, 260);
+  tft.setTextPadding(SCREEN_W);
+  tft.drawString(text, 160, 195);  // same line as the "Fetching..." status so it is overwritten
 
-  ui.drawProgressBar(10, 269, 240 - 20, 15, percentage, TFT_WHITE, TFT_BLUE);
+  ui.drawProgressBar(10, 210, SCREEN_W - 20, 15, percentage, TFT_WHITE, TFT_BLUE);
 
   tft.setTextPadding(0);
   tft.unloadFont();
@@ -372,12 +431,12 @@ void drawTime() {
   if (minute(local_time) < 10) timeNow += "0";
   timeNow += minute(local_time);
 
-  tft.setTextDatum(BC_DATUM);
+  tft.setTextDatum(TL_DATUM);
   tft.setTextColor(TFT_YELLOW, TFT_BLACK);
-  tft.setTextPadding(tft.textWidth(" 44:44 "));  // String width + margin
-  tft.drawString(timeNow, 120, 53);
+  tft.setTextPadding(tft.textWidth("44:44"));  // String width
+  tft.drawString(timeNow, CLOCK_X, CLOCK_Y);
 
-  drawSeparator(51);
+  drawSeparator(HEADER_DIV_Y);
 
   tft.setTextPadding(0);
 
@@ -393,10 +452,16 @@ void drawCurrentWeather() {
   String date = "Updated: " + strDate(now());  // see isue https://github.com/Bodmer/OpenWeather/issues/26
   String weatherText = "None";
 
-  tft.setTextDatum(BC_DATUM);
-  tft.setTextColor(TFT_ORANGE, TFT_BLACK);
+  // Location label (top-right)
+  tft.setTextDatum(TR_DATUM);
+  tft.setTextColor(TFT_CYAN, TFT_BLACK);
+  tft.setTextPadding(tft.textWidth(" Wwwwwwwwwwwwww "));  // wide enough to erase old label
+  tft.drawString(location, LOCATION_X, LOCATION_Y);
+
+  // Updated timestamp (top-right, below the location) - greyed as secondary info
+  tft.setTextColor(TFT_DARKGREY, TFT_BLACK);
   tft.setTextPadding(tft.textWidth(" Updated: Mmm 44 44:44 "));  // String width + margin
-  tft.drawString(date, 120, 16);
+  tft.drawString(date, UPDATED_X, UPDATED_Y);
 
   String weatherIcon = "";
 
@@ -405,7 +470,7 @@ void drawCurrentWeather() {
 
   weatherIcon = getMeteoconIcon(forecast->id[0], true);
 
-  ui.drawBmp("/icon/" + weatherIcon + ".bmp", 0, 53);
+  ui.drawBmp("/icon/" + weatherIcon + ".bmp", CUR_ICON_X, CUR_ICON_Y);
 
   // Weather Text
   if (language == "en")
@@ -413,23 +478,25 @@ void drawCurrentWeather() {
   else
     weatherText = forecast->description[0];
 
-  tft.setTextDatum(BR_DATUM);
+  tft.setTextDatum(TL_DATUM);
   tft.setTextColor(TFT_ORANGE, TFT_BLACK);
 
-  int splitPoint = 0;
-  int xpos = 235;
-  splitPoint = splitIndex(weatherText);
+  int splitPoint = splitIndex(weatherText);
 
-  tft.setTextPadding(xpos - 100);  // xpos - icon width
-  if (splitPoint) tft.drawString(weatherText.substring(0, splitPoint), xpos, 69);
-  else tft.drawString(" ", xpos, 69);
-  tft.drawString(weatherText.substring(splitPoint), xpos, 86);
+  tft.setTextPadding(tft.textWidth(" Wwwwwwww "));  // erase old label width
+  if (splitPoint) {
+    tft.drawString(weatherText.substring(0, splitPoint), COND_LABEL_X, COND_LABEL_Y);
+    tft.drawString(weatherText.substring(splitPoint),    COND_LABEL_X, COND_LABEL_Y + 16);
+  } else {
+    tft.drawString(weatherText, COND_LABEL_X, COND_LABEL_Y);
+    tft.drawString(" ",         COND_LABEL_X, COND_LABEL_Y + 16);
+  }
 
   tft.setTextColor(TFT_YELLOW, TFT_BLACK);
-  tft.setTextDatum(TR_DATUM);
+  tft.setTextDatum(TL_DATUM);
   tft.setTextPadding(0);
-  if (units == "metric") tft.drawString("oC", 237, 95);
-  else tft.drawString("oF", 237, 95);
+  if (units == "metric") tft.drawString("oC", TEMP_UNIT_X, TEMP_UNIT_Y);
+  else tft.drawString("oF", TEMP_UNIT_X, TEMP_UNIT_Y);
 
   //Temperature large digits added in updateData() to save swapping font here
 
@@ -439,9 +506,9 @@ void drawCurrentWeather() {
   if (units == "metric") weatherText += " m/s";
   else weatherText += " mph";
 
-  tft.setTextDatum(TC_DATUM);
+  tft.setTextDatum(TL_DATUM);
   tft.setTextPadding(tft.textWidth("888 m/s"));  // Max string length?
-  tft.drawString(weatherText, 124, 136);
+  tft.drawString(weatherText, WIND_TXT_X, WIND_SPEED_Y);
 
   if (units == "imperial") {
     weatherText = forecast->pressure[0];
@@ -451,16 +518,16 @@ void drawCurrentWeather() {
     weatherText += " hPa";
   }
 
-  tft.setTextDatum(TR_DATUM);
-  tft.setTextPadding(tft.textWidth(" 8888hPa"));  // Max string length?
-  tft.drawString(weatherText, 230, 136);
+  tft.setTextDatum(TL_DATUM);
+  tft.setTextPadding(tft.textWidth("8888 hPa"));  // Max string length?
+  tft.drawString(weatherText, WIND_TXT_X, WIND_PRESS_Y);
 
   int windAngle = (forecast->wind_deg[0] + 22.5) / 45;
   if (windAngle > 7) windAngle = 0;
   String wind[] = { "N", "NE", "E", "SE", "S", "SW", "W", "NW" };
-  ui.drawBmp("/wind/" + wind[windAngle] + ".bmp", 101, 86);
+  ui.drawBmp("/wind/" + wind[windAngle] + ".bmp", WIND_ICON_X, WIND_ICON_Y);
 
-  drawSeparator(153);
+  tft.drawFastVLine(COL_DIV_X, COL_DIV_TOP, COL_DIV_BOT - COL_DIV_TOP, 0x4228);
 
   tft.setTextDatum(TL_DATUM);  // Reset datum to normal
   tft.setTextPadding(0);       // Reset padding width to none
@@ -469,39 +536,37 @@ void drawCurrentWeather() {
 /***************************************************************************************
 **                          Draw the 4 forecast columns
 ***************************************************************************************/
-// draws the three forecast columns
+// draws the 2x2 grid of 4 forecast days
 void drawForecast() {
   int8_t dayIndex = getNextDayIndex();
 
-  drawForecastDetail(8, 171, dayIndex);
+  drawForecastDetail(FC_COL_L_X, FC_R1_DAY_Y, FC_R1_TEMP_Y, FC_R1_ICON_Y, dayIndex);  // TUE
   dayIndex += 8;
-  drawForecastDetail(66, 171, dayIndex);  // was 95
+  drawForecastDetail(FC_COL_R_X, FC_R1_DAY_Y, FC_R1_TEMP_Y, FC_R1_ICON_Y, dayIndex);  // WED
   dayIndex += 8;
-  drawForecastDetail(124, 171, dayIndex);  // was 180
+  drawForecastDetail(FC_COL_L_X, FC_R2_DAY_Y, FC_R2_TEMP_Y, FC_R2_ICON_Y, dayIndex);  // THU
   dayIndex += 8;
-  drawForecastDetail(182, 171, dayIndex);  // was 180
-  drawSeparator(171 + 69);
+  drawForecastDetail(FC_COL_R_X, FC_R2_DAY_Y, FC_R2_TEMP_Y, FC_R2_ICON_Y, dayIndex);  // FRI
+
+  drawSeparator(BOTTOM_DIV_Y);
 }
 
 /***************************************************************************************
 **                          Draw 1 forecast column at x, y
 ***************************************************************************************/
 // helper for the forecast columns
-void drawForecastDetail(uint16_t x, uint16_t y, uint8_t dayIndex) {
+void drawForecastDetail(uint16_t cx, uint16_t dayY, uint16_t tempY, uint16_t iconY, uint8_t dayIndex) {
 
   if (dayIndex >= MAX_DAYS * 8) return;
 
   String day = shortDOW[weekday(TIMEZONE.toLocal(forecast->dt[dayIndex + 4], &tz1_Code))];
   day.toUpperCase();
 
-  tft.setTextDatum(BC_DATUM);
-
+  // Day label (gold, centred on the column)
+  tft.setTextDatum(TC_DATUM);
   tft.setTextColor(TFT_ORANGE, TFT_BLACK);
   tft.setTextPadding(tft.textWidth("WWW"));
-  tft.drawString(day, x + 25, y);
-
-  tft.setTextColor(TFT_WHITE, TFT_BLACK);
-  tft.setTextPadding(tft.textWidth("-88   -88"));
+  tft.drawString(day, cx, dayY);
 
   // Find the temperature min and max during the day
   float tmax = -9999;
@@ -513,11 +578,19 @@ void drawForecastDetail(uint16_t x, uint16_t y, uint8_t dayIndex) {
 
   String highTemp = String(tmax, 0);
   String lowTemp = String(tmin, 0);
-  tft.drawString(highTemp + " " + lowTemp, x + 25, y + 17);
 
+  // High (white) ends just left of centre; low (cyan) starts just right of centre
+  tft.setTextPadding(tft.textWidth("-88"));
+  tft.setTextColor(TFT_WHITE, TFT_BLACK);
+  tft.setTextDatum(TR_DATUM);
+  tft.drawString(highTemp, cx - 3, tempY);
+  tft.setTextColor(TFT_CYAN, TFT_BLACK);
+  tft.setTextDatum(TL_DATUM);
+  tft.drawString(lowTemp, cx + 3, tempY);
+
+  // Condition icon (32x32) centred on the column
   String weatherIcon = getMeteoconIcon(forecast->id[dayIndex + 4], false);
-
-  ui.drawBmp("/icon50/" + weatherIcon + ".bmp", x, y + 18);
+  ui.drawBmp("/icon50/" + weatherIcon + ".bmp", cx - 16, iconY);
 
   tft.setTextPadding(0);  // Reset padding width to none
 }
@@ -539,51 +612,54 @@ void drawAstronomy() {
   int ip;
   uint8_t icon = moon_phase(y, m, d, h, &ip);
 
-  tft.drawString(moonPhase[ip], 120, 319);
-  ui.drawBmp("/moon/moonphase_L" + String(icon) + ".bmp", 120 - 30, 318 - 16 - 60);
+  ui.drawBmp("/moon/moonphase_L" + String(icon) + ".bmp", MOON_CX - 17, MOON_ICON_Y);
+  tft.drawString(moonPhase[ip], MOON_CX, MOON_LABEL_Y);
 
-  tft.setTextDatum(BC_DATUM);
-  tft.setTextColor(TFT_ORANGE, TFT_BLACK);
-  tft.setTextPadding(0);  // Reset padding width to none
-  tft.drawString(sunStr, 40, 270);
-
-  tft.setTextDatum(BR_DATUM);
+  // Sunrise / sunset, aligned with the Cloud label/value rows (no "Sun" header).
+  // Each row: orange sun disc + orange up/down arrow + white time, centred as a unit on SUN_X.
+  // ML_DATUM => y is the vertical centre of the text, matching the disc/arrow centres.
+  tft.setTextDatum(ML_DATUM);
   tft.setTextColor(TFT_WHITE, TFT_BLACK);
-  tft.setTextPadding(tft.textWidth(" 88:88 "));
+  tft.setTextPadding(tft.textWidth("88:88"));
 
-  String rising = strTime(forecast->sunrise) + " ";
-  int dt = rightOffset(rising, ":");  // Draw relative to colon to them aligned
-  tft.drawString(rising, 40 + dt, 290);
+  String rising = strTime(forecast->sunrise);
+  int startX = SUN_X - (20 + tft.textWidth(rising)) / 2;  // disc(6) + gap(4) + arrow(6) + gap(4) + time
+  tft.fillCircle(startX + 3, SUN_RISE_Y, 3, TFT_ORANGE);
+  drawArrow(startX + 13, SUN_RISE_Y, true, TFT_ORANGE);
+  tft.drawString(rising, startX + 20, SUN_RISE_Y + 2);
 
-  String setting = strTime(forecast->sunset) + " ";
-  dt = rightOffset(setting, ":");
-  tft.drawString(setting, 40 + dt, 305);
+  String setting = strTime(forecast->sunset);
+  startX = SUN_X - (20 + tft.textWidth(setting)) / 2;
+  tft.fillCircle(startX + 3, SUN_SET_Y, 3, TFT_ORANGE);
+  drawArrow(startX + 13, SUN_SET_Y, false, TFT_ORANGE);
+  tft.drawString(setting, startX + 20, SUN_SET_Y + 2);
 
-  tft.setTextDatum(BC_DATUM);
+  // Cloud (centred column)
+  tft.setTextDatum(TC_DATUM);
   tft.setTextColor(TFT_ORANGE, TFT_BLACK);
-  tft.drawString(cloudStr, 195, 260);  // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< ?
+  tft.setTextPadding(0);
+  tft.drawString(cloudStr, CLOUD_X, BB_LABEL_Y);
 
   String cloudCover = "";
   cloudCover += forecast->clouds_all[0];
   cloudCover += "%";
 
-  tft.setTextDatum(BR_DATUM);
   tft.setTextColor(TFT_WHITE, TFT_BLACK);
-  tft.setTextPadding(tft.textWidth(" 100%"));
-  tft.drawString(cloudCover, 210, 277);
+  tft.setTextPadding(tft.textWidth(" 100% "));
+  tft.drawString(cloudCover, CLOUD_X, BB_VALUE_Y);
 
-  tft.setTextDatum(BC_DATUM);
+  // Humidity (centred column)
   tft.setTextColor(TFT_ORANGE, TFT_BLACK);
-  tft.drawString(humidityStr, 195, 300 - 2);  // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< ?
+  tft.setTextPadding(0);
+  tft.drawString(humidityStr, HUM_X, BB_LABEL_Y);
 
   String humidity = "";
   humidity += forecast->humidity[0];
   humidity += "%";
 
-  tft.setTextDatum(BR_DATUM);
-  tft.setTextColor(TFT_WHITE, TFT_BLACK);
-  tft.setTextPadding(tft.textWidth("100%"));
-  tft.drawString(humidity, 210, 315);
+  tft.setTextColor(TFT_CYAN, TFT_BLACK);
+  tft.setTextPadding(tft.textWidth(" 100% "));
+  tft.drawString(humidity, HUM_X, BB_VALUE_Y);
 
   tft.setTextPadding(0);  // Reset padding width to none
 }
@@ -623,7 +699,25 @@ const char* getMeteoconIcon(uint16_t id, bool today) {
 ***************************************************************************************/
 // if you don't want separators, comment out the tft-line
 void drawSeparator(uint16_t y) {
-  tft.drawFastHLine(10, y, 240 - 2 * 10, 0x4228);
+  tft.drawFastHLine(10, y, SCREEN_W - 2 * 10, 0x4228);
+}
+
+/***************************************************************************************
+**                          Draw a small up/down arrow from line primitives
+***************************************************************************************/
+// ~8px tall, vertically centred on yCentre, horizontally centred on x.
+void drawArrow(int x, int yCentre, bool up, uint16_t colour) {
+  int half = 4;  // half-height -> ~8px tall
+  int top = yCentre - half;
+  int bot = yCentre + half;
+  tft.drawLine(x, top, x, bot, colour);  // vertical shaft
+  if (up) {
+    tft.drawLine(x, top, x - 3, top + 4, colour);  // left head
+    tft.drawLine(x, top, x + 3, top + 4, colour);  // right head
+  } else {
+    tft.drawLine(x, bot, x - 3, bot - 4, colour);  // left head
+    tft.drawLine(x, bot, x + 3, bot - 4, colour);  // right head
+  }
 }
 
 /***************************************************************************************
