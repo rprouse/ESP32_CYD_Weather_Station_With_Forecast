@@ -349,8 +349,6 @@ void updateData() {
   Serial.println(longitude);
 #endif
 
-#define SHOW_HEADER 1
-
   Serial.println("Getting weather data...");
   Serial.print("https://api.openweathermap.org/data/2.5/forecast?lat=" + latitude + "&lon=" + longitude + "&units=" + units + "&lang=" + language + "&appid=" + api_key);
 
@@ -618,23 +616,23 @@ void drawAstronomy() {
   tft.drawString(moonPhase[ip], MOON_CX, MOON_LABEL_Y);
 
   // Sunrise / sunset, aligned with the Cloud label/value rows (no "Sun" header).
-  // Each row: orange sun disc + orange up/down arrow + cyan time, centred as a unit on SUN_X.
+  // Each row: orange sun disc + orange up/down arrow + white time, centred as a unit on SUN_X.
   // ML_DATUM => y is the vertical centre of the text, matching the disc/arrow centres.
   tft.setTextDatum(ML_DATUM);
-  tft.setTextColor(TFT_CYAN, TFT_BLACK);
+  tft.setTextColor(TFT_WHITE, TFT_BLACK);
   tft.setTextPadding(tft.textWidth("88:88"));
 
   String rising = strTime(forecast->sunrise);
   int startX = SUN_X - (20 + tft.textWidth(rising)) / 2;  // disc(6) + gap(4) + arrow(6) + gap(4) + time
   tft.fillCircle(startX + 3, SUN_RISE_Y, 3, TFT_ORANGE);
   drawArrow(startX + 13, SUN_RISE_Y, true, TFT_ORANGE);
-  tft.drawString(rising, startX + 20, SUN_RISE_Y);
+  tft.drawString(rising, startX + 20, SUN_RISE_Y + 2);
 
   String setting = strTime(forecast->sunset);
   startX = SUN_X - (20 + tft.textWidth(setting)) / 2;
   tft.fillCircle(startX + 3, SUN_SET_Y, 3, TFT_ORANGE);
   drawArrow(startX + 13, SUN_SET_Y, false, TFT_ORANGE);
-  tft.drawString(setting, startX + 20, SUN_SET_Y);
+  tft.drawString(setting, startX + 20, SUN_SET_Y + 2);
 
   // Cloud (centred column)
   tft.setTextDatum(TC_DATUM);
