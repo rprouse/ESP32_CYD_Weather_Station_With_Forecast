@@ -382,15 +382,15 @@ void updateData() {
     // Update the temperature here so we don't need to keep
     // loading and unloading font which takes time
     tft.loadFont(AA_FONT_LARGE, LittleFS);
-    tft.setTextDatum(TR_DATUM);
+    tft.setTextDatum(TL_DATUM);
     tft.setTextColor(TFT_YELLOW, TFT_BLACK);
 
     // Font ASCII code 0xB0 is a degree symbol, but o used instead in small font
-    tft.setTextPadding(tft.textWidth(" -88"));  // Max width of values
+    tft.setTextPadding(tft.textWidth("-88"));  // Max width of values
 
     String weatherText = "";
     weatherText = String(forecast->temp[0], 0);  // Make it integer temperature
-    tft.drawString(weatherText, 215, 95);        //  + "°" symbol is big... use o in small font
+    tft.drawString(weatherText, TEMP_X, TEMP_Y); //  + "°" symbol is big... use o in small font
     tft.unloadFont();
   } else {
     Serial.println("Failed to get weather");
@@ -472,7 +472,7 @@ void drawCurrentWeather() {
 
   weatherIcon = getMeteoconIcon(forecast->id[0], true);
 
-  ui.drawBmp("/icon/" + weatherIcon + ".bmp", 0, 53);
+  ui.drawBmp("/icon/" + weatherIcon + ".bmp", CUR_ICON_X, CUR_ICON_Y);
 
   // Weather Text
   if (language == "en")
@@ -480,23 +480,25 @@ void drawCurrentWeather() {
   else
     weatherText = forecast->description[0];
 
-  tft.setTextDatum(BR_DATUM);
+  tft.setTextDatum(TL_DATUM);
   tft.setTextColor(TFT_ORANGE, TFT_BLACK);
 
-  int splitPoint = 0;
-  int xpos = 235;
-  splitPoint = splitIndex(weatherText);
+  int splitPoint = splitIndex(weatherText);
 
-  tft.setTextPadding(xpos - 100);  // xpos - icon width
-  if (splitPoint) tft.drawString(weatherText.substring(0, splitPoint), xpos, 69);
-  else tft.drawString(" ", xpos, 69);
-  tft.drawString(weatherText.substring(splitPoint), xpos, 86);
+  tft.setTextPadding(tft.textWidth(" Wwwwwwww "));  // erase old label width
+  if (splitPoint) {
+    tft.drawString(weatherText.substring(0, splitPoint), COND_LABEL_X, COND_LABEL_Y);
+    tft.drawString(weatherText.substring(splitPoint),    COND_LABEL_X, COND_LABEL_Y + 16);
+  } else {
+    tft.drawString(weatherText, COND_LABEL_X, COND_LABEL_Y);
+    tft.drawString(" ",         COND_LABEL_X, COND_LABEL_Y + 16);
+  }
 
   tft.setTextColor(TFT_YELLOW, TFT_BLACK);
-  tft.setTextDatum(TR_DATUM);
+  tft.setTextDatum(TL_DATUM);
   tft.setTextPadding(0);
-  if (units == "metric") tft.drawString("oC", 237, 95);
-  else tft.drawString("oF", 237, 95);
+  if (units == "metric") tft.drawString("oC", TEMP_UNIT_X, TEMP_UNIT_Y);
+  else tft.drawString("oF", TEMP_UNIT_X, TEMP_UNIT_Y);
 
   //Temperature large digits added in updateData() to save swapping font here
 
@@ -506,9 +508,9 @@ void drawCurrentWeather() {
   if (units == "metric") weatherText += " m/s";
   else weatherText += " mph";
 
-  tft.setTextDatum(TC_DATUM);
+  tft.setTextDatum(TL_DATUM);
   tft.setTextPadding(tft.textWidth("888 m/s"));  // Max string length?
-  tft.drawString(weatherText, 124, 136);
+  tft.drawString(weatherText, WIND_TXT_X, WIND_SPEED_Y);
 
   if (units == "imperial") {
     weatherText = forecast->pressure[0];
@@ -518,16 +520,16 @@ void drawCurrentWeather() {
     weatherText += " hPa";
   }
 
-  tft.setTextDatum(TR_DATUM);
-  tft.setTextPadding(tft.textWidth(" 8888hPa"));  // Max string length?
-  tft.drawString(weatherText, 230, 136);
+  tft.setTextDatum(TL_DATUM);
+  tft.setTextPadding(tft.textWidth("8888 hPa"));  // Max string length?
+  tft.drawString(weatherText, WIND_TXT_X, WIND_PRESS_Y);
 
   int windAngle = (forecast->wind_deg[0] + 22.5) / 45;
   if (windAngle > 7) windAngle = 0;
   String wind[] = { "N", "NE", "E", "SE", "S", "SW", "W", "NW" };
-  ui.drawBmp("/wind/" + wind[windAngle] + ".bmp", 101, 86);
+  ui.drawBmp("/wind/" + wind[windAngle] + ".bmp", WIND_ICON_X, WIND_ICON_Y);
 
-  drawSeparator(153);
+  tft.drawFastVLine(COL_DIV_X, COL_DIV_TOP, COL_DIV_BOT - COL_DIV_TOP, 0x4228);
 
   tft.setTextDatum(TL_DATUM);  // Reset datum to normal
   tft.setTextPadding(0);       // Reset padding width to none
