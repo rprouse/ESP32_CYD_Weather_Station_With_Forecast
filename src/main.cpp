@@ -187,7 +187,7 @@ void drawProgress(uint8_t percentage, String text);
 void drawTime();
 void drawCurrentWeather();
 void drawForecast();
-void drawForecastDetail(uint16_t x, uint16_t y, uint8_t dayIndex);
+void drawForecastDetail(uint16_t cx, uint16_t dayY, uint16_t tempY, uint16_t iconY, uint8_t dayIndex);
 const char* getMeteoconIcon(uint16_t id, bool today);
 void drawAstronomy();
 void drawSeparator(uint16_t y);
@@ -538,39 +538,37 @@ void drawCurrentWeather() {
 /***************************************************************************************
 **                          Draw the 4 forecast columns
 ***************************************************************************************/
-// draws the three forecast columns
+// draws the 2x2 grid of 4 forecast days
 void drawForecast() {
   int8_t dayIndex = getNextDayIndex();
 
-  drawForecastDetail(8, 171, dayIndex);
+  drawForecastDetail(FC_COL_L_X, FC_R1_DAY_Y, FC_R1_TEMP_Y, FC_R1_ICON_Y, dayIndex);  // TUE
   dayIndex += 8;
-  drawForecastDetail(66, 171, dayIndex);  // was 95
+  drawForecastDetail(FC_COL_R_X, FC_R1_DAY_Y, FC_R1_TEMP_Y, FC_R1_ICON_Y, dayIndex);  // WED
   dayIndex += 8;
-  drawForecastDetail(124, 171, dayIndex);  // was 180
+  drawForecastDetail(FC_COL_L_X, FC_R2_DAY_Y, FC_R2_TEMP_Y, FC_R2_ICON_Y, dayIndex);  // THU
   dayIndex += 8;
-  drawForecastDetail(182, 171, dayIndex);  // was 180
-  drawSeparator(171 + 69);
+  drawForecastDetail(FC_COL_R_X, FC_R2_DAY_Y, FC_R2_TEMP_Y, FC_R2_ICON_Y, dayIndex);  // FRI
+
+  drawSeparator(BOTTOM_DIV_Y);
 }
 
 /***************************************************************************************
 **                          Draw 1 forecast column at x, y
 ***************************************************************************************/
 // helper for the forecast columns
-void drawForecastDetail(uint16_t x, uint16_t y, uint8_t dayIndex) {
+void drawForecastDetail(uint16_t cx, uint16_t dayY, uint16_t tempY, uint16_t iconY, uint8_t dayIndex) {
 
   if (dayIndex >= MAX_DAYS * 8) return;
 
   String day = shortDOW[weekday(TIMEZONE.toLocal(forecast->dt[dayIndex + 4], &tz1_Code))];
   day.toUpperCase();
 
-  tft.setTextDatum(BC_DATUM);
-
+  // Day label (gold, centred on the column)
+  tft.setTextDatum(TC_DATUM);
   tft.setTextColor(TFT_ORANGE, TFT_BLACK);
   tft.setTextPadding(tft.textWidth("WWW"));
-  tft.drawString(day, x + 25, y);
-
-  tft.setTextColor(TFT_WHITE, TFT_BLACK);
-  tft.setTextPadding(tft.textWidth("-88   -88"));
+  tft.drawString(day, cx, dayY);
 
   // Find the temperature min and max during the day
   float tmax = -9999;
@@ -582,11 +580,19 @@ void drawForecastDetail(uint16_t x, uint16_t y, uint8_t dayIndex) {
 
   String highTemp = String(tmax, 0);
   String lowTemp = String(tmin, 0);
-  tft.drawString(highTemp + " " + lowTemp, x + 25, y + 17);
 
+  // High (white) ends just left of centre; low (cyan) starts just right of centre
+  tft.setTextPadding(tft.textWidth("-88"));
+  tft.setTextColor(TFT_WHITE, TFT_BLACK);
+  tft.setTextDatum(TR_DATUM);
+  tft.drawString(highTemp, cx - 3, tempY);
+  tft.setTextColor(TFT_CYAN, TFT_BLACK);
+  tft.setTextDatum(TL_DATUM);
+  tft.drawString(lowTemp, cx + 3, tempY);
+
+  // Condition icon (50x50) centred on the column
   String weatherIcon = getMeteoconIcon(forecast->id[dayIndex + 4], false);
-
-  ui.drawBmp("/icon50/" + weatherIcon + ".bmp", x, y + 18);
+  ui.drawBmp("/icon50/" + weatherIcon + ".bmp", cx - 25, iconY);
 
   tft.setTextPadding(0);  // Reset padding width to none
 }
